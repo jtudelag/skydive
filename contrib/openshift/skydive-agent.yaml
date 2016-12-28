@@ -1,0 +1,38 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: skydive-agent
+spec:
+  template:
+    metadata:
+      labels:
+        app: skydive
+        tier: agent
+    spec:
+      hostNetwork: true
+      hostPID: true
+      serviceAccount: skydive
+      containers:
+      - name: skydive-agent
+        image: skydive/skydive
+        securityContext:
+          privileged: true
+        args:
+        - agent
+        ports:
+        - containerPort: 8081
+        env:
+        - name: SKYDIVE_AGENT_ANALYZERS
+          value: "$(SKYDIVE_ANALYZER_SERVICE_HOST):$(SKYDIVE_ANALYZER_SERVICE_PORT_API)"
+        volumeMounts:
+        - name: docker
+          mountPath: /var/run/docker.sock
+        - name: ovsdb
+          mountPath: /var/run/openvswitch/db.sock
+      volumes:
+      - name: docker
+        hostPath:
+          path: /var/run/docker.sock
+      - name: ovsdb
+        hostPath:
+          path: /var/run/openvswitch/db.sock
